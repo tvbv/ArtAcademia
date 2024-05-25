@@ -1,0 +1,5 @@
+groq
+langchain
+langchain_groq
+streamlit
+audio-recorder-streamlit # is it necessary?

@@ -3,6 +3,26 @@
 import json
 import os
 
+
+def measure_accuracy(user_input, expected_output):
+    """
+    This function measures the accuracy of the user's input compared to the expected output.
+    """
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    # Create a TfidfVectorizer object
+    vectorizer = TfidfVectorizer()
+
+    # Fit and transform the user input and expected output
+    X = vectorizer.fit_transform([user_input, expected_output])
+
+    # Calculate the cosine similarity between the user input and expected output
+    similarity = cosine_similarity(X)
+
+    return similarity[0][1]
+
+
 def read_json(file_path):
     """Read JSON file and return the data."""
     with open(file_path, 'r') as file:
@@ -34,6 +54,10 @@ def generate_report(data):
     report.append("User Learning Report")
     report.append("=" * 20)
     
+    # TODO: iterate on the user messages and bot responses (expected output)
+    #  measure accuracy between user input and bot output
+    # accuracy = measure_accuracy(msg_user, msg_bot_expected_output)
+
     report.append(f"Confidence Scores: {data['confidence_scores']}")
     report.append(f"Average Confidence Score: {sum(data['confidence_scores']) / len(data['confidence_scores']):.2f}")
     
