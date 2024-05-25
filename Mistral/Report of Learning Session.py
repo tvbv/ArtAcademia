@@ -3,9 +3,10 @@
 import json
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Define the absolute path to the JSON input file
-filepath = "/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/input.json"
+filepath = "//Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/ArtAcademia/Mistral/input.json"
 
 def read_json(file_path):
     """Read JSON file and return the data."""
@@ -73,8 +74,8 @@ def plot_confidence_scores(confidence_scores, output_path):
 def main():
     # Use the absolute path to the input JSON file
     input_file = filepath  # Path to the specific input JSON file
-    output_report_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/learning_report.txt'  # Path to the output report file
-    output_plot_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/confidence_scores_plot.png'  # Path to the output plot file
+    output_report_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/ArtAcademia/Mistralearning_report.txt'  # Path to the output report file
+    output_plot_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/ArtAcademia/Mistral/confidence_scores_plot.png'  # Path to the output plot file
 
     # Aggregate confidence scores and other data
     aggregated_data = aggregate_confidence_scores(input_file)
@@ -130,6 +131,74 @@ def main():
     print(personalized_content["improvement_areas"])
     print("Areas of Strength:")
     print(personalized_content["strength_areas"])
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+#######
+
+
+
+def plot_confidence_scores(confidence_scores, output_path):
+    """Plot the confidence scores and save the plot."""
+    plt.figure(figsize=(6, 6))  # Standardize the plot to be square
+    plt.plot(confidence_scores, marker='o', linestyle='-', color='b')
+    plt.xlabel('Sessions', fontsize=12)
+    plt.ylabel('Confidence Score', fontsize=12)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.savefig(output_path, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+
+def plot_dunning_kruger_curve(confidence_scores, output_path):
+    """Plot the Dunning-Kruger curve and place user confidence scores on it."""
+    x = np.linspace(0, 1, 100)
+    y = -4 * (x - 0.5)**2 + 1  # Simple quadratic to simulate Dunning-Kruger curve
+
+    normalized_confidence_scores = [(score - min(confidence_scores)) / (max(confidence_scores) - min(confidence_scores)) for score in confidence_scores]
+    
+    plt.figure(figsize=(6, 6))
+    plt.plot(x, y, label="Dunning-Kruger Curve")
+    plt.scatter(normalized_confidence_scores, [-4 * (score - 0.5)**2 + 1 for score in normalized_confidence_scores], color='r', label="User Scores")
+    plt.xlabel('Perceived Knowledge', fontsize=12)
+    plt.ylabel('Actual Knowledge', fontsize=12)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.legend()
+    plt.savefig(output_path, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+
+def main():
+    # Use the absolute path to the input JSON file
+    input_file = filepath  # Path to the specific input JSON file
+    output_report_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/ArtAcademia/learning_report.txt'  # Path to the output report file
+    output_plot_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/ArtAcademia/confidence_scores_plot.png'  # Path to the output plot file
+    output_dunning_kruger_plot_file = '/Users/glencarter/Desktop/PhD/Thesis/Scripts/Mistral/ArtAcademia/dunning_kruger_plot.png'  # Path to the Dunning-Kruger plot file
+
+    # Aggregate confidence scores and other data
+    aggregated_data = aggregate_confidence_scores(input_file)
+
+    # Generate report
+    report = generate_report(aggregated_data)
+
+    # Save report to a file
+    save_report(report, output_report_file)
+    print(f"Report saved to {output_report_file}")
+
+    # Plot confidence scores and save the plot
+    plot_confidence_scores(aggregated_data['confidence_scores'], output_plot_file)
+    print(f"Confidence scores plot saved to {output_plot_file}")
+
+    # Plot Dunning-Kruger curve and user confidence scores
+    plot_dunning_kruger_curve(aggregated_data['confidence_scores'], output_dunning_kruger_plot_file)
+    print(f"Dunning-Kruger plot saved to {output_dunning_kruger_plot_file}")
 
 if __name__ == "__main__":
     main()
