@@ -17,6 +17,7 @@ from audio_recorder_streamlit import audio_recorder
 from langchain_core.pydantic_v1 import BaseModel
 import json
 
+
 class Answer(BaseModel):
     '''FIXME An answer to the user question along with justification for the answer.'''
     confidence: str
@@ -25,7 +26,42 @@ class Answer(BaseModel):
     # TODO
 
 
+def display_tone(tone):
+    if tone == 'Accusatory':
+        st.markdown(":exclamation:", unsafe_allow_html=True)
+    elif tone == 'Unassuming':
+        st.markdown(":question:", unsafe_allow_html=True)
+    elif tone == 'Formal':
+        st.markdown(":necktie:", unsafe_allow_html=True)
+    elif tone == 'Assertive':
+        st.markdown(":muscle:", unsafe_allow_html=True)
+    elif tone == 'Confident':
+        st.markdown(":sunglasses:", unsafe_allow_html=True)
+    elif tone == 'Informal':
+        st.markdown(":smile:", unsafe_allow_html=True)
+    else:
+        # for unknown tone
+        st.markdown(":grey_question:", unsafe_allow_html=True)
+
+
+def custom_progress_bar(value):
+    if value < 3:
+        color = 'red'
+    elif value < 6:
+        color = 'yellow'
+    else:
+        color = 'green'
+
+    progress_html = f"""
+    <div style='width: 100%; background: lightgray; border-radius: 10px;'>
+        <div style='width: {value}%; height: 10px; background: {color}; border-radius: 5px;'></div>
+    </div>
+    """
+    st.markdown(progress_html, unsafe_allow_html=True)
+
 # Fonction pour afficher l'historique de conversation
+
+
 def render_chat_history():
 
     for msg in st.session_state.chat_history:
@@ -40,12 +76,19 @@ def render_chat_history():
             # TODO: work on the categories : confidence  /// grammarly
             # TODO 2: work on collecting the follow up questiosn
             msg_bot_confidence = msg_bot['confidence']
+            msg_bot_tone = msg_bot['tone']
             msg_bot_feedback = msg_bot['feedback']
             msg_bot_follow_up = msg_bot['follow_up_question']
             msg_bot_expected_output = msg_bot['expected_output']
 
             with st.chat_message("user", avatar='👨‍💻'):
                 st.markdown(msg["human"])
+            # progress bar for the confidence level
+            # with st.spinner(f"Confidence level: {msg_bot_confidence}"):
+            #     st.progress(int(msg_bot_confidence)*10)
+            custom_progress_bar(int(msg_bot_confidence)*10)
+            display_tone(msg_bot_tone)
+
             with st.chat_message("user", avatar='🤖'):
                 st.markdown(msg_bot_follow_up)
         except Exception as e:
@@ -67,7 +110,6 @@ def main():
     st.write("Hello! What subject to you want to review?")
     # TODO: SOCRATES LOGO DESIGN !!! + BACKGROUND? st.image('groqcloud_darkmode.png')
 
-
     # TODO: see how can ask the model whether it is a written or spoken answer:
     # FIXME: need to ask the groq team to have access the private beta about the whisper model for audio transcription!!
     # audio_bytes = audio_recorder()
@@ -75,7 +117,7 @@ def main():
     #     # save the audio file
     #     with open("audio.wav", "wb") as f:
     #         f.write(audio_bytes)
-        
+
     #     # st.audio(audio_bytes, format="audio/wav") # audio playback for debugging
     #     # convert the audio file to text
     #     with open("audio.wav", "rb") as file:
@@ -109,12 +151,13 @@ def main():
 
     You are an interviewer assisting a candidate in preparing for a technical interview and behavioral questions.
     Provide concise, structured feedback based on the user's input, making sure to express encouragement, assess their skill level, and prompt further thought. Responses should be designed to match the user's level of knowledge, with the goal of moving forward through the interview, offering hints to the user when necessary, or acknowledging their understanding positively.
-    ALWAYS answer in JSON format with following keys:
-    - "confidence" (expressing an assessment of their skill level or readiness) on a scale of 1 to 10 (1 being the lowest and 10 the highest). A 1 means your next question should be very basic, while a 10 means you can ask a more advanced question.
-    - "tone" in the form of "Accusatory", "Unassuming", "Formal", "Assertive", "Confident", "Informal", 
+    ALWAYS answer in JSON format (starting with a { bracket and finishing with a } bracket) with following keys:
+    
+    - "confidence" (expressing an assessment of their skill level or readiness) on a scale of 0 to 10 (1 being the lowest and 10 the highest). A 1 means your next question should be very basic, while a 10 means you can ask a more advanced question.
+    - "tone" in the form of "Accusatory", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
     - "feedback" (if applicable, a brief suggestion for improvement or a positive remark on their understanding)
-    - "follow_up_question" (a simple question to encourage further discussion or thought related to their input).
-    - "expected_output" (if applicable, the expected output of the user's code or query). Should be factual and concise.
+    - "follow_up_question" (the most important part: the follow-up question based on the judgment you have of the user response. If you feel the answer was bad, just ask a simpler question, otherwise more difficult).
+    - "expected_output" (if applicable, the expected output of the follow-up question you are asking). Should be factual and concise.
 
     Ensure your feedback is succinct, aiming for no more than one sentence per key to keep the response concise and to the point.
     When feedback is not necessary due to the user's proficient understanding, you might exclude detailed suggestions for improvement, opting instead for a brief acknowledgment or none at all, and adjust the follow-up question to continue the engagement effectively.
@@ -131,7 +174,8 @@ def main():
 #    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
 
     model = 'mixtral-8x7b-32768'
-    conversational_memory_length = 10 # FIXME: test whether the context length is enough
+    # FIXME: test whether the context length is enough
+    conversational_memory_length = 10
 
     memory = ConversationBufferWindowMemory(
         k=conversational_memory_length, memory_key="chat_history", return_messages=True)
@@ -193,6 +237,7 @@ def main():
 
         # Display the chat sequentially
         render_chat_history()
+
 
 if __name__ == "__main__":
     main()

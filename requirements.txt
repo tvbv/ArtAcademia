@@ -2,4 +2,8 @@ groq
 langchain
 langchain_groq
 streamlit
-audio-recorder-streamlit # is it necessary?
+#audio-recorder-streamlit # is it necessary?
+#langchain_openai
+#langchain-community
+#lxml
+#chromadb
