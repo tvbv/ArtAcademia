@@ -34,6 +34,7 @@ def render_chat_history():
         msg_bot = msg['AI']
 
         try:
+            print(msg_bot)
             # parse the JSON object
             msg_bot = json.loads(msg_bot)
             # TODO: work on the categories : confidence  /// grammarly
@@ -46,7 +47,7 @@ def render_chat_history():
             with st.chat_message("user", avatar='👨‍💻'):
                 st.markdown(msg["human"])
             with st.chat_message("user", avatar='🤖'):
-                st.markdown(msg["AI"])
+                st.markdown(msg_bot_follow_up)
         except Exception as e:
             st.error(e, icon="🚨")
 
@@ -59,17 +60,29 @@ def main():
     # Get Groq API key #FIXME env variable
     groq_api_key = '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'
 
+    client_groq = Groq(api_key=groq_api_key)
 
     st.set_page_config(page_icon="💬", layout="wide",  page_title="Socrates...")
     st.title("Prepare for your interview!")
-    st.write("Hello! I'm your friendly Groq chatbot. I can help answer your questions, provide information, or just chat. I'm also super fast! Let's start our conversation!")
+    st.write("Hello! What subject to you want to review?")
     # TODO: SOCRATES LOGO DESIGN !!! + BACKGROUND? st.image('groqcloud_darkmode.png')
 
-    audio_bytes = audio_recorder()
 
-    if audio_bytes:
-        # st.audio(audio_bytes, format="audio/wav") 
-        # transcribed_text = transcribe(...)
+    # TODO: see how can ask the model whether it is a written or spoken answer:
+    # FIXME: need to ask the groq team to have access the private beta about the whisper model for audio transcription!!
+    # audio_bytes = audio_recorder()
+    # if audio_bytes:
+    #     # save the audio file
+    #     with open("audio.wav", "wb") as f:
+    #         f.write(audio_bytes)
+        
+    #     # st.audio(audio_bytes, format="audio/wav") # audio playback for debugging
+    #     # convert the audio file to text
+    #     with open("audio.wav", "rb") as file:
+    #         transcription = client_groq.audio.transcriptions.create(
+    #             file=("audio.wav", file.read()), model="whisper-large-v3")
+    #     st.write(transcription.text)
+
     def icon(emoji: str):
         """Shows an emoji as a Notion-style page icon."""
         st.write(
@@ -137,10 +150,10 @@ def main():
     groq_chat = ChatGroq(
         groq_api_key=groq_api_key,
         model_name=model,
-
     )
+
     # FIXME: ask the groq team how to structure the output of the model using a pydantic schema?
-    # groq_chat = groq_chat.with_structured_output(Answer)
+    # groq_chat = groq_chat.with_structured_output(method="json_mode")
 
     # If the user has asked a question,
     if user_answer := st.chat_input("Enter your prompt here..."):
