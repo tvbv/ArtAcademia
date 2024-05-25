@@ -1,0 +1,27 @@
+[
+    {
+        "confidence": 4,
+        "feedback": "Great start, try to explore more complex queries.",
+        "follow_up_question": "How comfortable are you with joins and subqueries?"
+    },
+    {
+        "confidence": 3,
+        "feedback": "Good progress, but you need to work on optimization techniques.",
+        "follow_up_question": "Do you understand the concept of indexing?"
+    },
+    {
+        "confidence": 5,
+        "feedback": "Excellent work, you're mastering the basics quickly.",
+        "follow_up_question": "Are you ready to tackle advanced query tuning?"
+    },
+    {
+        "confidence": 2,
+        "feedback": "You need to spend more time on understanding the basics.",
+        "follow_up_question": "Have you reviewed the fundamental SQL commands?"
+    },
+    {
+        "confidence": 4,
+        "feedback": "Solid understanding, but there's room for improvement in handling large datasets.",
+        "follow_up_question": "Do you feel confident in using aggregate functions?"
+    }
+]
