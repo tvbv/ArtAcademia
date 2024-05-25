@@ -27,7 +27,7 @@ class Answer(BaseModel):
 
 # Fonction pour afficher l'historique de conversation
 def render_chat_history():
-    print(st.session_state.chat_history)
+
     for msg in st.session_state.chat_history:
 
         msg_user = msg['human']
@@ -42,18 +42,23 @@ def render_chat_history():
         # msg_bot_confidence = msg_bot['confidence']
         # msg_bot_feedback = msg_bot['feedback']
         # msg_bot_follow_up = msg_bot['follow_up_question']
-        st.markdown(f"""
-            <div class="user-message">
-                <img src="user_avatar.png" class="avatar">
-                <span>{msg["human"]}</span>
-            </div>
-        """, unsafe_allow_html=True)
-        st.markdown(f"""
-            <div class="bot-message">
-                <img src="bot_avatar.png" class="avatar">
-                <span>{msg["AI"]}</span>
-            </div>
-        """, unsafe_allow_html=True)
+
+        with st.chat_message("user", avatar='👨‍💻'):
+            st.markdown(msg["human"])
+        with st.chat_message("user", avatar='🤖'):
+            st.markdown(msg["AI"])
+        # st.markdown(f"""
+        #     <div class="user-message">
+        #         <img src="user_avatar.png" class="avatar">
+        #         <span>{msg["human"]}</span>
+        #     </div>
+        # """, unsafe_allow_html=True)
+        # st.markdown(f"""
+        #     <div class="bot-message">
+        #         <img src="bot_avatar.png" class="avatar">
+        #         <span>{msg["AI"]}</span>
+        #     </div>
+        # """, unsafe_allow_html=True)
 
 
 
@@ -71,8 +76,16 @@ def main():
     #     st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
+    st.set_page_config(page_icon="💬", layout="wide",  page_title="Socrates...")
     st.title("Prepare for your interview!")
     st.write("Hello! I'm your friendly Groq chatbot. I can help answer your questions, provide information, or just chat. I'm also super fast! Let's start our conversation!")
+
+    def icon(emoji: str):
+        """Shows an emoji as a Notion-style page icon."""
+        st.write(
+            f'<span style="font-size: 78px; line-height: 1">{emoji}</span>',
+            unsafe_allow_html=True,
+        )
 
     # Add customization options to the sidebar
     st.sidebar.title('Interview Report')
@@ -110,13 +123,10 @@ def main():
 #    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
 
     model = 'mixtral-8x7b-32768'
-    # conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value = 5)
     conversational_memory_length = 10
 
     memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
-
-    user_question = st.text_input("Ask a question:", "")
-
+       
     # session state variable
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history=[]
@@ -136,15 +146,8 @@ def main():
     )
     # groq_chat = groq_chat.with_structured_output(Answer)
 
-    st.markdown(f"""
-            <div class="bot-message">
-                <img src="bot_avatar.png" class="avatar">
-                <span>{"Could you please introduce yourself?"}</span>
-            </div>
-        """, unsafe_allow_html=True)
-
     # If the user has asked a question,
-    if user_question:
+    if user_question := st.chat_input("Enter your prompt here..."):
 
         # Construct a chat prompt template using various components
         prompt = ChatPromptTemplate.from_messages(
@@ -184,6 +187,7 @@ def main():
         # # Display the chatbot's response
         # st.write("Chatbot:", response)
         render_chat_history()
+
 
 
     # Display the chat history
