@@ -14,30 +14,46 @@ from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 
+from langchain_core.pydantic_v1 import BaseModel
 
-# Fonction pour ajouter un message à l'historique
-def add_message(role, message):
-    st.session_state.chat_history.append({"role": role, "content": message})
-    render_chat_history()
+class Answer(BaseModel):
+    '''An answer to the user question along with justification for the answer.'''
+    confidence: str
+    feedback: str
+    follow_up_question: str
+    #TODO
+
 
 
 # Fonction pour afficher l'historique de conversation
 def render_chat_history():
+    print(st.session_state.chat_history)
     for msg in st.session_state.chat_history:
-        if msg["role"] == "user":
-            st.markdown(f"""
-                <div class="user-message">
-                    <img src="user_avatar.png" class="avatar">
-                    <span>{msg["content"]}</span>
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-                <div class="bot-message">
-                    <img src="bot_avatar.png" class="avatar">
-                    <span>{msg["content"]}</span>
-                </div>
-            """, unsafe_allow_html=True)
+
+        msg_user = msg['human']
+        msg_bot = msg['AI']
+        # parse the JSON object
+        # import json
+        # msg_bot = json.loads(msg_bot)
+        # print('msg_bot:', type(msg_bot))
+
+        # import pdb
+        # pdb.set_trace()
+        # msg_bot_confidence = msg_bot['confidence']
+        # msg_bot_feedback = msg_bot['feedback']
+        # msg_bot_follow_up = msg_bot['follow_up_question']
+        st.markdown(f"""
+            <div class="user-message">
+                <img src="user_avatar.png" class="avatar">
+                <span>{msg["human"]}</span>
+            </div>
+        """, unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class="bot-message">
+                <img src="bot_avatar.png" class="avatar">
+                <span>{msg["AI"]}</span>
+            </div>
+        """, unsafe_allow_html=True)
 
 
 
@@ -61,7 +77,17 @@ def main():
     # Add customization options to the sidebar
     st.sidebar.title('Interview Report')
 
-    #system_prompt = st.sidebar.text_input("System prompt:")
+    # generate a button to generate the report
+    generate_report = st.sidebar.button('Generate Report')
+    if generate_report:
+        # call function to generate the report
+        def generate_report():
+            # generate a random report
+            st.sidebar.write("Report generated!")
+            st.sidebar.write(st.session_state.chat_history)
+
+        generate_report()
+
     # model = st.sidebar.selectbox(
     #     'Choose a model',
     #     ['llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma-7b-it']
@@ -77,10 +103,11 @@ def main():
 
     EXAMPLE
     user_input: I've started using databases, and I'm familiar with basic queries.
-    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
+    ideal_output: How comfortable are you with joins and subqueries?
 
-    The topic of is interview is about: 
+    The topic of is interview is about: Database Management
     """
+#    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
 
     model = 'mixtral-8x7b-32768'
     # conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value = 5)
@@ -88,7 +115,7 @@ def main():
 
     memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
 
-    user_question = st.text_input("Ask a question:")
+    user_question = st.text_input("Ask a question:", "")
 
     # session state variable
     if 'chat_history' not in st.session_state:
@@ -104,9 +131,17 @@ def main():
     # Initialize Groq Langchain chat object and conversation
     groq_chat = ChatGroq(
             groq_api_key=groq_api_key, 
-            model_name=model
-    )
+            model_name=model,
 
+    )
+    # groq_chat = groq_chat.with_structured_output(Answer)
+
+    st.markdown(f"""
+            <div class="bot-message">
+                <img src="bot_avatar.png" class="avatar">
+                <span>{"Could you please introduce yourself?"}</span>
+            </div>
+        """, unsafe_allow_html=True)
 
     # If the user has asked a question,
     if user_question:
@@ -135,19 +170,20 @@ def main():
             verbose=True,   # Enables verbose output, which can be useful for debugging.
             memory=memory,  # The conversational memory object that stores and manages the conversation history.
         )
-        
+
         # The chatbot's answer is generated by sending the full prompt to the Groq API.
         response = conversation.predict(human_input=user_question)
         message = {'human':user_question,'AI':response}
         print(message)
         st.session_state.chat_history.append(message)
-        
+
         # TODO APPEND INSTEAD OF WRITE AND ERASE ? HOW TO INSERT ?
         # Display the user question
-        st.write("You:", user_question)
+        # st.write("You:", user_question)
 
-        # Display the chatbot's response
-        st.write("Chatbot:", response)
+        # # Display the chatbot's response
+        # st.write("Chatbot:", response)
+        render_chat_history()
 
 
     # Display the chat history
