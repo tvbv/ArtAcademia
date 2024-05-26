@@ -54,8 +54,9 @@ def main():
 
     "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
     "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
-    "next_question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
-        
+    "tone": the phrasing tone of the answer, can be "Concerned", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
+    "question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
+
     The user has chosen to review the following subject:
         """
     CONVERSATIONAL_MEMORY_LENGHT = 10
@@ -186,8 +187,9 @@ def main():
         generate_report = st.sidebar.button('Generate Report')
         if generate_report:
             # call function to generate the report
+            
             generate_report_fct(chat_history = st.session_state.chat_history)
-    
+
 
     # FIXME: see Ena's prompt
     #    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
@@ -258,7 +260,7 @@ def main():
             print("response : \n", repr(response))
 
 
-            
+
             response = parse_json(response)
 
             print("response after rid of trail----------------------- \n",response)

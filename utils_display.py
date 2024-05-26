@@ -26,21 +26,27 @@ def display_tone(tone):
     """
     Display an emoji based on the tone of the message.
     """
-    if tone == 'Accusatory':
-        st.markdown(":exclamation:", unsafe_allow_html=True)
+    if tone == 'Concerned':
+        emoji = ":worried:"
     elif tone == 'Unassuming':
-        st.markdown(":question:", unsafe_allow_html=True)
+        emoji = ":smile:"
     elif tone == 'Formal':
-        st.markdown(":necktie:", unsafe_allow_html=True)
+        emoji = ":necktie:"
     elif tone == 'Assertive':
-        st.markdown(":muscle:", unsafe_allow_html=True)
+        emoji = ":muscle:"
     elif tone == 'Confident':
-        st.markdown(":sunglasses:", unsafe_allow_html=True)
+        emoji = ":sunglasses:"
     elif tone == 'Informal':
-        st.markdown(":smile:", unsafe_allow_html=True)
+        emoji = ":shirt:"
     else:
         # for unknown tone
-        st.markdown(":grey_question:", unsafe_allow_html=True)
+        emoji = ":grey_question:"
+
+
+    if tone:
+        st.markdown(f"{emoji} {tone}", unsafe_allow_html=True)
+    else:
+        st.markdown(f"{emoji}", unsafe_allow_html=True)
 
 def custom_progress_bar(value):
     """ displays a custom progress bar based on the value passed (is used for confidence)"""
@@ -52,8 +58,8 @@ def custom_progress_bar(value):
         color = 'green'
 
     progress_html = f"""
-    <div style='width: 100%; background: lightgray; border-radius: 5px;'>
-        <div style='width: {value}%; height: 5px; background: {color}; border-radius: 5px;'></div>*
+    <div style='width: 100%; background: lightgray; border-radius: 10px; margin-top: 8px;'>
+        <div style='width: {value}%; height: 10px; background: {color}; border-radius: 5px;'></div>
     </div>
     """
     st.markdown(progress_html, unsafe_allow_html=True)
@@ -89,7 +95,7 @@ def render_chat_history(chat_history, mode="Interview", rag=None):
 
             msg_bot_confidence = msg_bot['confidence']
             if mode == "Interview":
-                msg_bot_next_question = msg_bot['next_question']
+                msg_bot_next_question = msg_bot['question']
             else:
                 RAG_PROMPT_QUESTION = """
                 What is the next logical question to ask?
@@ -99,12 +105,28 @@ def render_chat_history(chat_history, mode="Interview", rag=None):
             
 
             msg_bot_expected_output = msg_bot['expected']
+            msg_bot_tone = msg_bot['tone']
+
 
             with st.chat_message("user", avatar='👨‍💻'):
                 st.markdown(msg["human"])
-                
-            custom_progress_bar(int(msg_bot_confidence)*10)
-            #display_tone(msg_bot_tone)
+
+            # progress bar for the confidence level
+            # with st.spinner(f"Confidence level: {msg_bot_confidence}"):
+            #     st.progress(int(msg_bot_confidence)*10)
+
+            # custom_progress_bar(int(msg_bot_confidence)*10)
+            # display_tone(msg_bot_tone)
+
+
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.markdown("**Tone**")
+                display_tone(msg_bot_tone)
+
+            with col2:
+                st.markdown("**Confidence**")
+                custom_progress_bar(int(msg_bot_confidence * 10))
 
             with st.chat_message("user", avatar='🤖'):
                 st.markdown(msg_bot_next_question)
