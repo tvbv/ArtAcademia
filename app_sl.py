@@ -24,7 +24,7 @@ from langchain_groq import ChatGroq
 from utils_prompt import clean_json, parse_json
 from utils_display import display_tone, custom_progress_bar, icon, render_chat_history
 from utils_report import generate_report_fct
-
+from rag import create_rag, ask_question
 
 class Answer(BaseModel):
     '''FIXME An answer to the user question along with justification for the answer.'''
@@ -50,7 +50,7 @@ def main():
 
     OUTPUT FORMAT: ONLY answer in a JSON format with the following keys: "expected", "confidence", "next_question"
     
-    IF YOU DONT ANSWER WHITH THESE KEYS IN A JSON READABLE FORMAT YOU WILL BE PENALIZED. BE WARRY OF BAD CHARACTER FOR JSON FORMAT.
+    IF YOU DONT ANSWER WHITH THESE KEYS IN A JSON READABLE FORMAT YOU WILL BE PENALIZED. BE WARRY OF BAD CHARACTER FOR JSON FORMAT (avoid at all cost \ in the text).
 
     "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
     "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
@@ -77,14 +77,53 @@ def main():
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False
         st.session_state.chosen_subject = None
+        st.session_state.mode = None
+        st.session_state.uploaded_file = None
+        st.session_state.system_prompt = SYSTEM_PROMPT
     
+    placeholder_logos = st.empty()
+    with placeholder_logos:
+        st.title("Welcome to Socrates!")
+        st.subheader("A conversational AI to help you prepare for your technical interviews!")
+
+    col1, col2 = st.columns([1, 2])
+    placeholder_columns = st.empty()
+    with placeholder_columns:
+        with col1:
+            st.image('mistralailogo.png', width=100)
+        with col2:
+            st.image('socrates.png', width=100)
+
     placeholder_button = st.empty()
     with placeholder_button:
         enter_demo = st.button("Enter the demo")
     placeholder_starting_page = st.empty()
     with placeholder_starting_page:
         st.subheader("Choose a subject to review")
-        subject = st.text_input("Enter the subject here...")
+        subject = st.text_input("Enter the subject here (You can assume Mixtral knows about it!)...")
+    placeholder_pdf = st.empty()
+    with placeholder_pdf:
+        # pdf uploader
+        # hash the name of the file to avoid conflicts
+
+        uploaded_file = st.file_uploader("... Or upload a university course / cool ML book directly!", type=['pdf'])
+        if uploaded_file is not None:
+            # hash the name of the file to avoid conflicts
+            import hashlib
+            m = hashlib.sha256()
+            m.update(uploaded_file.name.encode())
+            file_hash = m.hexdigest()
+            folder_name = f"documents_{file_hash}"
+            print('folder_name:', folder_name)
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+            else:
+                st.write("File already uploaded!")
+
+            # save the file in the documents folder (# FIXME move this to a documents_hash folder to avoid conflicts with multiple users uploading the same file name)
+            with open(f"{folder_name}/{uploaded_file.name}", "wb") as f:
+                f.write(uploaded_file.read())
+            st.write("File uploaded successfully!")
 
 
     ### DEMO ENTRY ###
@@ -94,38 +133,36 @@ def main():
         if subject:
             st.session_state.button_clicked = True
             st.session_state.chosen_subject = subject
-        else:
-            st.error("Please enter a subject to continue.")
-    
+            st.session_state.mode = "Interview"
+            st.session_state.system_prompt += st.session_state.chosen_subject
 
-    if not st.session_state.button_clicked:
-        # Show starting page elements
-        # Two columns: 1 for text field to choose the subject with the button to enter the demo and 1 for a file uploader to upload a file
-        st.title("Welcome to Socrates!")
-        # text field with a submit button to enter the demo
-        # col1, col2 = st.columns([2, 1])
-        # with col1:
-        #     st.write("Hello! What subject to you want to review?")
-        #     subject = st.text_input("Enter the subject here...")
-        # with col2:
-        #     uploaded_file = st.file_uploader("Upload a file", type=['txt', 'pdf', 'docx']) #TODO
-        #     if uploaded_file is not None:
-        #         # save the file
-        #         with open("file.txt", "wb") as f:
-        #             f.write(uploaded_file.read())
-        #         st.write("File uploaded successfully!")
-    
-    else:
+        elif uploaded_file:
+            st.session_state.button_clicked = True
+            st.session_state.mode = "RAG"
+            st.session_state.chosen_subject = "PDF document: " + uploaded_file.name # TODO summarize the subject nicely using the RAG????
+
+            # do a loading spinner while the RAG is being created
+            with st.spinner("Creating the RAG..."):
+                rag = create_rag(document_folder=folder_name)
+                st.success("RAG created successfully!")
+
+            # TODO summarize it!
+            st.session_state.system_prompt += ask_question(rag, "What is the document about? (Answer concisely in one sentence.)")
+        else:
+            st.error("Please enter a subject or upload a document to continue.")
+
+    if st.session_state.button_clicked:
         # Clear the starting page
+        placeholder_logos.empty()
+        placeholder_columns.empty()
         placeholder_button.empty()
         placeholder_starting_page.empty()
+        placeholder_pdf.empty()
         st.title("Prepare for your interview!")
         st.subheader("Subject: " + st.session_state.chosen_subject)
         with st.chat_message("user", avatar='🤖'):
             # TODO: replace that with the first question
             st.markdown("Hi! Can you please introduce yourself?")
-
-        # TODO: SOCRATES LOGO DESIGN !!! + BACKGROUND? st.image('groqcloud_darkmode.png')
 
         # TODO: see how can ask the model whether it is a written or spoken answer:
         # FIXME: need to ask the groq team to have access the private beta about the whisper model for audio transcription!!
@@ -141,15 +178,7 @@ def main():
         #         transcription = client_groq.audio.transcriptions.create(
         #             file=("audio.wav", file.read()), model="whisper-large-v3")
         #     st.write(transcription.text)
-
-
-        
-        SYSTEM_PROMPT += st.session_state.chosen_subject
-
-        # st.write(f"Subject: {subject}")
-        # Add customization options to the sidebar
-
-
+    
         ### REPORT ###
         st.sidebar.title('Interview Report')
 
@@ -157,7 +186,6 @@ def main():
         generate_report = st.sidebar.button('Generate Report')
         if generate_report:
             # call function to generate the report
-            
             generate_report_fct(chat_history = st.session_state.chat_history)
     
 
@@ -167,7 +195,6 @@ def main():
         ### MODEL DEFINITION ###
 
         model = MODEL
-
 
         # FIXME: test whether the context length is enough
         memory = ConversationBufferWindowMemory(
@@ -199,7 +226,7 @@ def main():
             prompt = ChatPromptTemplate.from_messages(
                 [
                     SystemMessage(
-                        content=SYSTEM_PROMPT
+                        content=st.session_state.system_prompt
                     ),  # This is the persistent system prompt that is always included at the start of the chat.
 
                     MessagesPlaceholder(
@@ -247,7 +274,10 @@ def main():
             print(st.session_state.chat_history)
 
             # Display the chat sequentially
-            render_chat_history(chat_history = st.session_state.chat_history)
+            if st.session_state.mode == "Interview":
+                render_chat_history(chat_history = st.session_state.chat_history, mode=st.session_state.mode, rag=None)
+            else:
+                render_chat_history(chat_history = st.session_state.chat_history, mode=st.session_state.mode, rag=rag)
 
 
 if __name__ == "__main__":

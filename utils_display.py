@@ -8,7 +8,6 @@ import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 
 from groq import Groq
-
 from langchain.chains import ConversationChain, LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -19,6 +18,7 @@ from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel
+from rag import ask_question
 
 from langchain_groq import ChatGroq
 
@@ -52,8 +52,8 @@ def custom_progress_bar(value):
         color = 'green'
 
     progress_html = f"""
-    <div style='width: 100%; background: lightgray; border-radius: 10px;'>
-        <div style='width: {value}%; height: 10px; background: {color}; border-radius: 5px;'></div>*
+    <div style='width: 100%; background: lightgray; border-radius: 5px;'>
+        <div style='width: {value}%; height: 5px; background: {color}; border-radius: 5px;'></div>*
     </div>
     """
     st.markdown(progress_html, unsafe_allow_html=True)
@@ -67,7 +67,7 @@ def icon(emoji: str):
 
 
 # Fonction pour afficher l'historique de conversation
-def render_chat_history(chat_history):
+def render_chat_history(chat_history, mode="Interview", rag=None):
 
     for msg in chat_history:
 
@@ -88,15 +88,20 @@ def render_chat_history(chat_history):
             # "expected", "confidence", "feedback"
 
             msg_bot_confidence = msg_bot['confidence']
-            msg_bot_next_question = msg_bot['next_question']
+            if mode == "Interview":
+                msg_bot_next_question = msg_bot['next_question']
+            else:
+                RAG_PROMPT_QUESTION = """
+                What is the next logical question to ask?
+                """
+                msg_bot_next_question = ask_question(rag, "What is the next logical question to ask?")
+
+            
+
             msg_bot_expected_output = msg_bot['expected']
 
             with st.chat_message("user", avatar='👨‍💻'):
                 st.markdown(msg["human"])
-
-            # progress bar for the confidence level
-            # with st.spinner(f"Confidence level: {msg_bot_confidence}"):
-            #     st.progress(int(msg_bot_confidence)*10)
                 
             custom_progress_bar(int(msg_bot_confidence)*10)
             #display_tone(msg_bot_tone)
