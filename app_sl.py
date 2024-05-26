@@ -23,6 +23,7 @@ from langchain_groq import ChatGroq
 
 from utils_prompt import clean_json, parse_json
 from utils_display import display_tone, custom_progress_bar, icon, render_chat_history
+from utils_report import generate_report_fct
 
 
 class Answer(BaseModel):
@@ -44,22 +45,18 @@ def main():
 
     SYSTEM_PROMPT = """
 
-        You are an interviewer assisting a candidate in preparing for a technical interview and behavioral questions.
-        Provide concise, structured feedback based on the user's input, making sure to express encouragement, assess their skill level, and prompt further thought. Responses should be designed to match the user's level of knowledge, with the goal of moving forward through the interview, offering hints to the user when necessary, or acknowledging their understanding positively.
-        ONLY answer in JSON format (starting with a { bracket and finishing with a } bracket) with following keys:
+    You are assisting a candidate in preparing for a technical interview. Your task is to ask specific probing questions to make the user figure out what they know from what they don't know.
+    The goal is to help users think critically about the subject and identify areas where their knowledge may need reinforcement. Start with simple questions and get more detailed and advanced.
+
+    OUTPUT FORMAT: ONLY answer in a JSON format with the following keys: "expected", "confidence", "next_question"
+    
+    IF YOU DONT ANSWER WHITH THESE KEYS IN A JSON READABLE FORMAT YOU WILL BE PENALIZED. BE WARRY OF BAD CHARACTER FOR JSON FORMAT.
+
+    "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
+    "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
+    "next_question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
         
-        - "confidence" (expressing an assessment of their skill level or readiness) on a scale of 0 to 10 (1 being the lowest and 10 the highest). A 1 means your next question should be very basic, while a 10 means you can ask a more advanced question.
-        - "tone" in the form of "Accusatory", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
-        - "feedback" (if applicable, a brief suggestion for improvement or a positive remark on their understanding)
-        - "follow_up_question" (the most important part: the follow-up question based on the judgment you have of the user response. If you feel the answer was bad, just ask a simpler question, otherwise more difficult).
-        - "expected_output" (if applicable, the expected output of the follow-up question you are asking). Should be factual and concise.
-
-        Ensure your feedback is succinct, aiming for no more than one sentence per key to keep the response concise and to the point.
-        When feedback is not necessary due to the user's proficient understanding, you might exclude detailed suggestions for improvement, opting instead for a brief acknowledgment or none at all, and adjust the follow-up question to continue the engagement effectively.
-        Craft your response as a single JSON object, including the necessary keys. Tailor your feedback and questions to accurately reflect the user's current level of expertise, avoiding details or concepts that may confuse or overwhelm them, and providing hints or guidance where necessary.
-
-
-        The user has chosen to review the following subject:
+    The user has chosen to review the following subject:
         """
     CONVERSATIONAL_MEMORY_LENGHT = 10
 
@@ -161,8 +158,7 @@ def main():
         if generate_report:
             # call function to generate the report
             
-
-            generate_report()
+            generate_report_fct(chat_history = st.session_state.chat_history)
     
 
     # FIXME: see Ena's prompt

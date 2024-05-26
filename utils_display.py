@@ -85,11 +85,11 @@ def render_chat_history(chat_history):
             # TODO: work on the categories : confidence  /// grammarly
             # TODO 2: work on collecting the follow up questiosn
 
+            # "expected", "confidence", "feedback"
+
             msg_bot_confidence = msg_bot['confidence']
-            msg_bot_tone = msg_bot['tone']
-            msg_bot_feedback = msg_bot['feedback']
-            msg_bot_follow_up = msg_bot['follow_up_question']
-            msg_bot_expected_output = msg_bot['expected_output']
+            msg_bot_next_question = msg_bot['next_question']
+            msg_bot_expected_output = msg_bot['expected']
 
             with st.chat_message("user", avatar='👨‍💻'):
                 st.markdown(msg["human"])
@@ -99,10 +99,10 @@ def render_chat_history(chat_history):
             #     st.progress(int(msg_bot_confidence)*10)
                 
             custom_progress_bar(int(msg_bot_confidence)*10)
-            display_tone(msg_bot_tone)
+            #display_tone(msg_bot_tone)
 
             with st.chat_message("user", avatar='🤖'):
-                st.markdown(msg_bot_follow_up)
+                st.markdown(msg_bot_next_question)
 
         except Exception as e:
             st.error(e, icon="🚨")
