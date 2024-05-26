@@ -33,7 +33,7 @@ def clean_json(llm_output):
     
     # Remove any invalid characters (non-printable ASCII characters)
     json_like_str = re.sub(r'[^\x20-\x7E]+', '', json_like_str)
-    
+
     # Correct any common JSON issues
     json_like_str = json_like_str.replace('\\"', '"')  # Fix improperly escaped quotes
     json_like_str = re.sub(r',\s*}', '}', json_like_str)  # Remove trailing commas before closing brace
@@ -50,4 +50,11 @@ def clean_json(llm_output):
 
 def parse_json(json_string):
     # split to get only up to the closing bracket
-    return json_string.split("}")[0] + "}"
+    new_json_string = json_string.split("}")[0] + "}"
+    # find the first {
+    start_index = new_json_string.find('{')
+    # find the last }
+    end_index = new_json_string.rfind('}') + 1
+    # get the json string
+    json_like_str = new_json_string[start_index:end_index]
+    return json_like_str
