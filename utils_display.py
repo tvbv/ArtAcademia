@@ -88,8 +88,10 @@ def render_chat_history(chat_history):
             # "expected", "confidence", "feedback"
 
             msg_bot_confidence = msg_bot['confidence']
-            msg_bot_next_question = msg_bot['next_question']
+            msg_bot_next_question = msg_bot['question']
             msg_bot_expected_output = msg_bot['expected']
+            msg_bot_tone = msg_bot['tone']
+
 
             with st.chat_message("user", avatar='👨‍💻'):
                 st.markdown(msg["human"])
@@ -97,9 +99,9 @@ def render_chat_history(chat_history):
             # progress bar for the confidence level
             # with st.spinner(f"Confidence level: {msg_bot_confidence}"):
             #     st.progress(int(msg_bot_confidence)*10)
-                
+
             custom_progress_bar(int(msg_bot_confidence)*10)
-            #display_tone(msg_bot_tone)
+            display_tone(msg_bot_tone)
 
             with st.chat_message("user", avatar='🤖'):
                 st.markdown(msg_bot_next_question)

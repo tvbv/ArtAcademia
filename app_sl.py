@@ -49,13 +49,14 @@ def main():
     The goal is to help users think critically about the subject and identify areas where their knowledge may need reinforcement. Start with simple questions and get more detailed and advanced.
 
     OUTPUT FORMAT: ONLY answer in a JSON format with the following keys: "expected", "confidence", "next_question"
-    
+
     IF YOU DONT ANSWER WHITH THESE KEYS IN A JSON READABLE FORMAT YOU WILL BE PENALIZED. BE WARRY OF BAD CHARACTER FOR JSON FORMAT.
 
     "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
     "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
-    "next_question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
-        
+    "tone": the phrasing tone of the answer, can be "Accusatory", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
+    "question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
+
     The user has chosen to review the following subject:
         """
     CONVERSATIONAL_MEMORY_LENGHT = 10
@@ -77,7 +78,7 @@ def main():
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False
         st.session_state.chosen_subject = None
-    
+
     placeholder_button = st.empty()
     with placeholder_button:
         enter_demo = st.button("Enter the demo")
@@ -96,7 +97,7 @@ def main():
             st.session_state.chosen_subject = subject
         else:
             st.error("Please enter a subject to continue.")
-    
+
 
     if not st.session_state.button_clicked:
         # Show starting page elements
@@ -114,7 +115,7 @@ def main():
         #         with open("file.txt", "wb") as f:
         #             f.write(uploaded_file.read())
         #         st.write("File uploaded successfully!")
-    
+
     else:
         # Clear the starting page
         placeholder_button.empty()
@@ -143,7 +144,7 @@ def main():
         #     st.write(transcription.text)
 
 
-        
+
         SYSTEM_PROMPT += st.session_state.chosen_subject
 
         # st.write(f"Subject: {subject}")
@@ -157,9 +158,9 @@ def main():
         generate_report = st.sidebar.button('Generate Report')
         if generate_report:
             # call function to generate the report
-            
+
             generate_report_fct(chat_history = st.session_state.chat_history)
-    
+
 
     # FIXME: see Ena's prompt
     #    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
@@ -231,7 +232,7 @@ def main():
             print("response : \n", repr(response))
 
 
-            
+
             response = parse_json(response)
 
             print("response after rid of trail----------------------- \n",response)
