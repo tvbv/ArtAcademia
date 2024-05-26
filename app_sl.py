@@ -54,7 +54,7 @@ def main():
 
     "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
     "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
-    "tone": the phrasing tone of the answer, can be "Accusatory", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
+    "tone": the phrasing tone of the answer, can be "Concerned", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
     "question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
 
     The user has chosen to review the following subject:
