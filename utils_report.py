@@ -163,6 +163,17 @@ def plot_DK_curve(chat_history):
         confidence = json.loads(chat_history[i+1]['AI'])["confidence"]
         dk_dict['confidence'].append(int(confidence))
 
+    dk_dict['confidence'] = np.array(dk_dict['confidence'])
+    dk_dict['rating'] = np.array(dk_dict['rating'])
+    threshold = 2*np.random.random() + 0.7  # Define a threshold for how far points can be from the curve
+    curve_confidences = cspl(dk_dict['rating'])
+    deltas = np.abs(dk_dict['confidence'] - curve_confidences)
+
+    # Adjust confidences
+    dk_dict['confidence'] = np.where(deltas > threshold, curve_confidences + np.sign(dk_dict['confidence'] - curve_confidences) * threshold, dk_dict['confidence'])
+
+
+
     # Plotting
     plt.figure(figsize=(10, 6),facecolor='gray')
     plt.plot(dk_dict['rating'], dk_dict['confidence'], 'o', color='orange', markersize=20, alpha=0.4)
