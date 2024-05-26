@@ -55,7 +55,7 @@ def custom_progress_bar(value):
     elif value < 6:
         color = 'yellow'
     else:
-        color = 'green'
+        color = 'blue'
 
     progress_html = f"""
     <div style='width: 100%; background: lightgray; border-radius: 10px; margin-top: 8px;'>

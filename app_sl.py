@@ -26,14 +26,13 @@ from utils_display import display_tone, custom_progress_bar, icon, render_chat_h
 from utils_report import generate_report_fct
 from rag import create_rag, ask_question
 
+
 class Answer(BaseModel):
     '''FIXME An answer to the user question along with justification for the answer.'''
     confidence: str
     feedback: str
     follow_up_question: str
     # TODO
-
-
 
 
 def main():
@@ -44,22 +43,46 @@ def main():
     MODEL = 'mixtral-8x7b-32768'
 
     SYSTEM_PROMPT = """
-
-    You are assisting a candidate in preparing for a technical interview. Your task is to ask specific probing questions to make the user figure out what they know from what they don't know.
+    You are assisting a candidate in preparing for a technical interview. The TOPIC the user wants  Your task is to ask specific probing questions to make the user figure out what they know from what they don't know.
     The goal is to help users think critically about the subject and identify areas where their knowledge may need reinforcement. Start with simple questions and get more detailed and advanced.
 
-    OUTPUT FORMAT: ONLY answer in a JSON format with the following keys: "expected", "confidence", "next_question"
-
-    IF YOU DONT ANSWER WHITH THESE KEYS IN A JSON READABLE FORMAT YOU WILL BE PENALIZED. BE WARRY OF BAD CHARACTER FOR JSON FORMAT (avoid at all cost \ in the text).
+    OUTPUT FORMAT: ONLY answer in a JSON format with the following keys:
 
     "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
-    "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
+    "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure, usually the case for short answers with little content) to 10 (completely confident, usually a longer answer). Be critical!
     "tone": the phrasing tone of the answer, can be "Concerned", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
     "question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
+Examples:
+    ----
+    1.
 
-    EXAMPLE:
+    The user answered the question "What is a SELECT statement used for?" with "IDK, sorry."
 
-    The user has chosen to review the following subject:
+    Your output:
+    {
+        "expected": "The 'SELECT' statement is used to fetch data from a database.",
+        "confidence": 0,
+        "tone": "Concerned",
+        "question": "No worries, let's start simple. What SQL command is used to retrieve data from a database table?"
+    }
+
+    ----
+    2.
+
+    The user answered the question "What does the SQL query SELECT * FROM employees; do?"
+
+    Your output:
+    {
+        "expected": "This query retrieves all columns from the 'employees' table.",
+        "confidence": 9,
+        "tone": "Confindent",
+        "question": "Good understanding! Can you write a SQL query that retrieves all columns from the 'employees' table where the 'age' is greater than 30?"
+    }
+
+
+    MAKE SURE TO ALWAYS ANSWER ONLY WITH A JSON WITH THE KEYS "expected", "confidence", "tone", "question". NEVER INCLUDE ANY MORE TEXT. BE WARRY OF BAD CHARACTER FOR JSON FORMAT (avoid at all cost \ in the text).
+
+    The TOPIC the user wants to be asked questions on is:
         """
     CONVERSATIONAL_MEMORY_LENGHT = 10
 
@@ -68,13 +91,7 @@ def main():
 
     client_groq = Groq(api_key=groq_api_key)
 
-
-
-
     st.set_page_config(page_icon="💬", layout="wide",  page_title="Socrates...")
-
-
-
 
     ### STARTING PAGE ###
     if "button_clicked" not in st.session_state:
@@ -84,11 +101,12 @@ def main():
         st.session_state.uploaded_file = None
         st.session_state.system_prompt = SYSTEM_PROMPT
         st.session_state.rag = None
-    
+
     placeholder_logos = st.empty()
     with placeholder_logos:
         st.title("Welcome to Socrates!")
-        st.subheader("A conversational AI to help you prepare for your technical interviews!")
+        st.subheader(
+            "A conversational AI to help you prepare for your technical interviews!")
 
     col1, col2 = st.columns([1, 2])
     placeholder_columns = st.empty()
@@ -104,13 +122,15 @@ def main():
     placeholder_starting_page = st.empty()
     with placeholder_starting_page:
         st.subheader("Choose a subject to review")
-        subject = st.text_input("Enter the subject here (You can assume Mixtral knows about it!)...")
+        subject = st.text_input(
+            "Enter the subject here (You can assume Mixtral knows about it!)...")
     placeholder_pdf = st.empty()
     with placeholder_pdf:
         # pdf uploader
         # hash the name of the file to avoid conflicts
 
-        uploaded_file = st.file_uploader("... Or upload a university course / cool ML book directly!", type=['pdf'])
+        uploaded_file = st.file_uploader(
+            "... Or upload a university course / cool ML book directly!", type=['pdf'])
         if uploaded_file is not None:
             # hash the name of the file to avoid conflicts
             import hashlib
@@ -129,7 +149,6 @@ def main():
                 f.write(uploaded_file.read())
             st.write("File uploaded successfully!")
 
-
     ### DEMO ENTRY ###
 
     # CHECK IF THE USER HAS ENTERED A SUBJECT
@@ -143,7 +162,8 @@ def main():
         elif uploaded_file:
             st.session_state.button_clicked = True
             st.session_state.mode = "RAG"
-            st.session_state.chosen_subject = "PDF document: " + uploaded_file.name # TODO summarize the subject nicely using the RAG????
+            # TODO summarize the subject nicely using the RAG????
+            st.session_state.chosen_subject = "PDF document: " + uploaded_file.name
 
             # do a loading spinner while the RAG is being created
             with st.spinner("Creating the RAG..."):
@@ -151,7 +171,8 @@ def main():
                 st.session_state.rag = rag
                 st.success("RAG created successfully!")
             # TODO summarize it!
-            st.session_state.system_prompt += ask_question(rag, "What is the document about? (Answer concisely in one sentence.)")
+            st.session_state.system_prompt += ask_question(
+                rag, "What is the document about? (Answer concisely in one sentence.)")
         else:
             st.error("Please enter a subject or upload a document to continue.")
 
@@ -182,7 +203,7 @@ def main():
         #         transcription = client_groq.audio.transcriptions.create(
         #             file=("audio.wav", file.read()), model="whisper-large-v3")
         #     st.write(transcription.text)
-    
+
         ### REPORT ###
         st.sidebar.title('Interview Report')
 
@@ -190,9 +211,8 @@ def main():
         generate_report = st.sidebar.button('Generate Report')
         if generate_report:
             # call function to generate the report
-            generate_report_fct(chat_history = st.session_state.chat_history)
-            render_chat_history(chat_history = st.session_state.chat_history)
-
+            generate_report_fct(chat_history=st.session_state.chat_history)
+            render_chat_history(chat_history=st.session_state.chat_history)
 
     # FIXME: see Ena's prompt
     #    ideal_output: {"confidence": "Moderate", "feedback": "Great start, try to explore more complex queries.", "follow_up_question": "How comfortable are you with joins and subqueries?"}
@@ -227,78 +247,78 @@ def main():
         # If the user has asked a question,
         if user_answer := st.chat_input("Enter your prompt here..."):
 
-            # Construct a chat prompt template using various components
-            prompt = ChatPromptTemplate.from_messages(
-                [
-                    SystemMessage(
-                        content=st.session_state.system_prompt
-                    ),  # This is the persistent system prompt that is always included at the start of the chat.
-
-                    MessagesPlaceholder(
-                        variable_name="chat_history"
-                    ),  # This placeholder will be replaced by the actual chat history during the conversation. It helps in maintaining context.
-
-                    HumanMessagePromptTemplate.from_template(
-                        "{human_input}"
-                    ),  # This template is where the user's current input will be injected into the prompt.
-                ]
-            )
-
-            # Create a conversation chain using the LangChain LLM (Language Learning Model)
             if st.session_state.mode == "Interview":
-                conversation = LLMChain(
-                    # The Groq LangChain chat object initialized earlier.
-                    llm=groq_chat,
-                    prompt=prompt,  # The constructed prompt template.
-                    # Enables verbose output, which can be useful for debugging.
-                    verbose=True,
-                    # The conversational memory object that stores and manages the conversation history.
-                    memory=memory,
-                )
-                # The chatbot's answer is generated by sending the full prompt to the Groq API.
-                response = conversation.predict(human_input=user_answer)
-            else:
-                # RAG mode
 
+                # Construct a chat prompt template using various components
+                prompt = ChatPromptTemplate.from_messages(
+                    [
+                        SystemMessage(
+                            content=st.session_state.system_prompt
+                        ),  # This is the persistent system prompt that is always included at the start of the chat.
+
+                        MessagesPlaceholder(
+                            variable_name="chat_history"
+                        ),  # This placeholder will be replaced by the actual chat history during the conversation. It helps in maintaining context.
+
+                        HumanMessagePromptTemplate.from_template(
+                            "{human_input}"
+                        ),  # This template is where the user's current input will be injected into the prompt.
+                    ]
+                )
+            else:
+                
                 user_deliveries = []
                 for i in range(len(st.session_state.chat_history)):
                     if st.session_state.chat_history[i]['human']:
-                        user_deliveries.append(st.session_state.chat_history[i]['human'])
+                        user_deliveries.append(
+                            st.session_state.chat_history[i]['human'])
                     if st.session_state.chat_history[i]['AI']:
-                        user_deliveries.append("Expected answer" + st.session_state.chat_history[i]['AI']['expected'])
-                        user_deliveries.append("Question " + st.session_state.chat_history[i]['AI']['question'])
+                        user_deliveries.append(
+                            st.session_state.chat_history[i]['AI'])
                 user_deliveries = ' ;'.join(user_deliveries)
-
-                RAG_PROMPT_QUESTION = """
-
-                You are assisting a candidate in preparing for a technical interview. Your task is to ask specific probing questions to make the user figure out what they know from what they don't know.
-                The goal is to help users think critically about the subject and identify areas where their knowledge may need reinforcement. Start with simple questions and get more detailed and advanced.
-
-                OUTPUT FORMAT: ONLY answer in a JSON format with the following keys: "expected", "confidence", "next_question"
-
-                IF YOU DONT ANSWER WHITH THESE KEYS IN A JSON READABLE FORMAT YOU WILL BE PENALIZED. BE WARRY OF BAD CHARACTER FOR JSON FORMAT (avoid at all cost \ in the text).
-
-                "expected": The correct answer to the question that you would have expected from the user. Should be factual and concise.
-                "confidence": Your judgement on the confidence level of the user's answer on a scale from 0 (very unconfident/insecure) to 10 (completely confident)
-                "tone": the phrasing tone of the answer, can be "Concerned", "Unassuming", "Formal", "Assertive", "Confident", "Informal"
-                "question": A brief suggestion for improvement or a positive remark on their understanding, with ONE further targeted question challenging the user to further assess their comprehension. If the answer was very good before, the question should be more difficult. If the user was struggling with the answer, the next question should be related but a bit simpler.
+                # RAG MODE:
+                RAG_TOPIC_QUESTION = """
+                Based on the following previous subjects mentioned by the user:
                 
-                Here are the actual topics that the user has mentioned so far:
+                """ + user_deliveries + """
 
-                """ + user_deliveries
-                print("RAG_PROMPT_QUESTION", RAG_PROMPT_QUESTION)
-                response = ask_question(st.session_state.rag, RAG_PROMPT_QUESTION)
+                What would you like to ask the user about? Add quotes to the document"""
 
+                topics = ask_question(st.session_state.rag, RAG_TOPIC_QUESTION)
+
+                prompt = ChatPromptTemplate.from_messages(
+                    [
+                        SystemMessage(
+                            content=st.session_state.system_prompt + topics
+                        ),  # This is the persistent system prompt that is always included at the start of the chat.
+
+                        MessagesPlaceholder(
+                            variable_name="chat_history"
+                        ),  # This placeholder will be replaced by the actual chat history during the conversation. It helps in maintaining context.
+
+                        HumanMessagePromptTemplate.from_template(
+                            "{human_input}"
+                        ),  # This template is where the user's current input will be injected into the prompt.
+                    ]
+                )
+
+            #Create a conversation chain using the LangChain LLM (Language Learning Model)
+            conversation = LLMChain(
+                # The Groq LangChain chat object initialized earlier.
+                llm=groq_chat,
+                prompt=prompt,  # The constructed prompt template.
+                # Enables verbose output, which can be useful for debugging.
+                verbose=True,
+                # The conversational memory object that stores and manages the conversation history.
+                memory=memory,
+            )
+            # The chatbot's answer is generated by sending the full prompt to the Groq API.
+            response = conversation.predict(human_input=user_answer)
+            
             print("response : \n", repr(response))
-
-
             response = parse_json(response)
+            print("response after rid of trail----------------------- \n", response)
 
-            print("response after rid of trail----------------------- \n",response)
-
-            # response = clean_json(response)
-
-            # print("response after clean----------------------- \n",response)
 
             message = {'human': user_answer, 'AI': response}
 
@@ -307,7 +327,8 @@ def main():
             print(st.session_state.chat_history)
 
             # Display the chat sequentially
-            render_chat_history(chat_history = st.session_state.chat_history)
+            render_chat_history(chat_history=st.session_state.chat_history)
+
 
 if __name__ == "__main__":
     main()
