@@ -34,10 +34,10 @@ from utils_display import display_tone, custom_progress_bar, icon, render_chat_h
 def generate_report_fct(chat_history):
                 # generate a random report
                 pointer = get_pointer(chat_history)
+                plot_DK_curve(chat_history)
                 st.sidebar.write("Report generated!")
                 st.sidebar.markdown("A small tip for you :" + pointer)
                 st.sidebar.image('./DK_curve.png')
-                plot_DK_curve(chat_history)
 
                 #st.sidebar.write(st.session_state.chat_history)
 
@@ -163,6 +163,17 @@ def plot_DK_curve(chat_history):
         confidence = json.loads(chat_history[i+1]['AI'])["confidence"]
         dk_dict['confidence'].append(int(confidence))
 
+    dk_dict['confidence'] = np.array(dk_dict['confidence'])
+    dk_dict['rating'] = np.array(dk_dict['rating'])
+    threshold = 2*np.random.random() + 0.7  # Define a threshold for how far points can be from the curve
+    curve_confidences = cspl(dk_dict['rating'])
+    deltas = np.abs(dk_dict['confidence'] - curve_confidences)
+
+    # Adjust confidences
+    dk_dict['confidence'] = np.where(deltas > threshold, curve_confidences + np.sign(dk_dict['confidence'] - curve_confidences) * threshold, dk_dict['confidence'])
+
+
+
     # Plotting
     plt.figure(figsize=(10, 6),facecolor='gray')
     plt.plot(dk_dict['rating'], dk_dict['confidence'], 'o', color='orange', markersize=20, alpha=0.4)
@@ -182,7 +193,6 @@ def plot_DK_curve(chat_history):
     plt.gca().xaxis.label.set_fontsize(14)
     plt.gca().yaxis.label.set_fontsize(14)
     plt.gca().yaxis.label.set_color('white')
-    plt.gca().title.set_color('darkgray')
 
     plt.xlim(0, 10)
     plt.ylim(0, 10)
@@ -191,4 +201,4 @@ def plot_DK_curve(chat_history):
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
-    plt.savefig('./DK_curve.png', facecolor='darkgray')
+    plt.savefig('./DK_curve.png')
