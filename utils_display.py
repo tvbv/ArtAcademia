@@ -53,7 +53,7 @@ def custom_progress_bar(value):
 
     progress_html = f"""
     <div style='width: 100%; background: lightgray; border-radius: 10px;'>
-        <div style='width: {value}%; height: 10px; background: {color}; border-radius: 5px;'></div>*
+        <div style='width: {value}%; height: 10px; background: {color}; border-radius: 5px;'></div>
     </div>
     """
     st.markdown(progress_html, unsafe_allow_html=True)
