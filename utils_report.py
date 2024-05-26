@@ -34,10 +34,10 @@ from utils_display import display_tone, custom_progress_bar, icon, render_chat_h
 def generate_report_fct(chat_history):
                 # generate a random report
                 pointer = get_pointer(chat_history)
+                plot_DK_curve(chat_history)
                 st.sidebar.write("Report generated!")
                 st.sidebar.markdown("A small tip for you :" + pointer)
                 st.sidebar.image('./DK_curve.png')
-                plot_DK_curve(chat_history)
 
                 #st.sidebar.write(st.session_state.chat_history)
 
