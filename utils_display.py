@@ -73,7 +73,7 @@ def icon(emoji: str):
 
 
 # Fonction pour afficher l'historique de conversation
-def render_chat_history(chat_history, mode="Interview", rag=None):
+def render_chat_history(chat_history):
 
     for msg in chat_history:
 
@@ -94,15 +94,7 @@ def render_chat_history(chat_history, mode="Interview", rag=None):
             # "expected", "confidence", "feedback"
 
             msg_bot_confidence = msg_bot['confidence']
-            if mode == "Interview":
-                msg_bot_next_question = msg_bot['question']
-            else:
-                RAG_PROMPT_QUESTION = """
-                What is the next logical question to ask?
-                """
-                msg_bot_next_question = ask_question(rag, "What is the next logical question to ask?")
-
-            
+            msg_bot_next_question = msg_bot['question']            
 
             msg_bot_expected_output = msg_bot['expected']
             msg_bot_tone = msg_bot['tone']
