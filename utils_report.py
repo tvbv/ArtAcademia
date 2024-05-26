@@ -193,7 +193,6 @@ def plot_DK_curve(chat_history):
     plt.gca().xaxis.label.set_fontsize(14)
     plt.gca().yaxis.label.set_fontsize(14)
     plt.gca().yaxis.label.set_color('white')
-    plt.gca().title.set_color('darkgray')
 
     plt.xlim(0, 10)
     plt.ylim(0, 10)
@@ -202,4 +201,4 @@ def plot_DK_curve(chat_history):
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
-    plt.savefig('./DK_curve.png', facecolor='darkgray')
+    plt.savefig('./DK_curve.png')
