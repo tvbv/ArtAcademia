@@ -14,10 +14,19 @@ from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_mistralai import MistralAIEmbeddings
 
 def create_rag(document_folder="documents"):
+    import toml
+    # Load the configuration file
+    config = toml.load('config.toml')
+
+    # Access the keys
+    groq_api_key = config['GROQ']['API_KEY']
+    mistral_key = config['MISTRAL']['KEY']
+
+
 
     embeddings_model = MistralAIEmbeddings(
         model="mistral-embed",
-        api_key="Kw8Ha1L2z6jqjRtnPcusRNGyQVflbjcW"
+        api_key=mistral_key
     )
 
     docs_vectorstore = Chroma(
